@@ -47,6 +47,7 @@ def run(dict_states: dict, initial_state_index: int = 1,
         tup = dict_states[current_state_index]
 
         rate_lambda: float = tup[0]
+        stationary: float = tup[2]
 
         scale = 1 / rate_lambda
 
@@ -83,16 +84,19 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
         current_state_index = new_actual_state_index + 1
 
+        error: float = empirical_distribution - stationary
+
         print(f"n: {n}, t: {t}, tau: {tau}, lambda: {rate_lambda}"
               f", accumulated: {accumulated_state_time}"
               f", empirical distribution: {empirical_distribution}"
-              f", {current_state_index0}->{current_state_index}")
+              f", {current_state_index0}->{current_state_index}"
+              f", {error}")
 
 
 states: dict = {
-    1: (1, {2: 1}),
-    2: (2, {1: 0.5, 3: 0.5}),
-    3: (3, {2: 1})
+    1: (1, {2: 1}, 3/7),
+    2: (2, {1: 0.5, 3: 0.5}, 3/7),
+    3: (3, {2: 1}, 1/7)
 }
 
 run(states, 1, 1000000)
