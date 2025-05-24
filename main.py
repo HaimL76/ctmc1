@@ -92,6 +92,49 @@ def run(dict_states: dict, initial_state_index: int = 1,
               f", {current_state_index0}->{current_state_index}"
               f", {error}")
 
+    indices: list = [0] * len(dict_states)
+
+    finished: bool = False
+
+    while not finished:
+        min_advance: tuple = (0, 0, 0)
+
+        found: bool = False
+
+        for state_index in dict_states_times.keys():
+            state_times = dict_states_times[state_index]
+
+            list_state_times: list = state_times[0]
+
+            actual_state_index: int = state_index - 1
+
+            index: int = indices[actual_state_index]
+
+            if index < len(list_state_times):
+                found = True
+
+                times: tuple = list_state_times[index]
+
+                t0: float = times[1]
+
+                min_time: float = min_advance[0]
+
+                if min_time == 0:
+                    min_advance = (t0, actual_state_index, index)
+                else:
+                    if t0 < min_time:
+                        min_advance = (t0, actual_state_index, index)
+
+        finished = not found
+
+        actual_state_index: int = min_advance[1]
+        index: int = min_advance[2]
+
+        indices[actual_state_index] = index + 1
+
+        print(min_advance)
+
+
 
 states: dict = {
     1: (1, {2: 1}, 3/7),
@@ -99,4 +142,4 @@ states: dict = {
     3: (3, {2: 1}, 1/7)
 }
 
-run(states, 1, 1000000)
+run(states, 1, 1000)
