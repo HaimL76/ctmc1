@@ -1,4 +1,4 @@
-
+import matplotlib.pyplot as plt
 import numpy as np
 
 def run(dict_states: dict, initial_state_index: int = 1,
@@ -73,8 +73,6 @@ def run(dict_states: dict, initial_state_index: int = 1,
                                                   accumulated_state_time,
                                                   empirical_distribution)
 
-        list_state_times.append((t0, t))
-
         actual_state_index: int = current_state_index - 1
 
         new_actual_state_index = np.random.choice(len(P),
@@ -86,11 +84,31 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
         error: float = empirical_distribution - stationary
 
+        list_state_times.append((t0, t, empirical_distribution, error))
+
         print(f"n: {n}, t: {t}, tau: {tau}, lambda: {rate_lambda}"
               f", accumulated: {accumulated_state_time}"
               f", empirical distribution: {empirical_distribution}"
               f", {current_state_index0}->{current_state_index}"
               f", {error}")
+
+    plt.figure()
+
+    plt.xlim(0, t)
+    plt.ylim(0, 1)
+
+    for state_index in dict_states_times.keys():
+        state_times = dict_states_times[state_index]
+
+        list_state_times: list = state_times[0]
+
+        x: list = [tup[1] for tup in list_state_times]
+        y: list = [tup[2] for tup in list_state_times]
+
+        plt.plot(x, y, label=f"empirical {state_index}")
+
+    plt.legend()
+    plt.show()
 
     indices: list = [0] * len(dict_states)
 
@@ -142,4 +160,4 @@ states: dict = {
     3: (3, {2: 1}, 1/7)
 }
 
-run(states, 1, 1000)
+run(states, 1, 100000)
