@@ -137,7 +137,8 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
     return dict_states_times, t_opt
 
 
-def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict):
+def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
+                 plot_path: str = 'ctmc1.png'):
     plt.figure()
 
     plt.xlim(0, t_opt)
@@ -169,6 +170,10 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict):
                        label=f"stationary {state_index}")
 
     plt.legend()
+
+    if plot_path:
+        plt.savefig(plot_path)
+
     plt.show()
 
     indices: list = [0] * len(dict_states)
@@ -216,10 +221,28 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict):
 
 def run(dict_states: dict, initial_state_index: int = 1,
         num_transitions: int = 100000, error_threshold: float = 0.01,
-        error_counter_percentage: float = 0.1, num_simulations: int = 10):
+        error_counter_percentage: float = 0.1, num_simulations: int = 10,
+        plot_path: str = 'ctmc1.png'):
+    min_t_opt: float = 0
+    opt_dict_states_times: dict = {}
+
     for i in range(num_simulations):
-        tup: tuple = run_simulation(dict_states, num_transitions, error_threshold,
-                                    error_counter_percentage, num_simulations)
+        tup: tuple = run_simulation(dict_states, initial_state_index, num_transitions,
+                                    error_threshold, error_counter_percentage)
+
+        t_opt: float = tup[1]
+        dict_states_times = tup[0]
+
+        if min_t_opt == 0:
+            min_t_opt = t_opt
+            opt_dict_states_times = dict_states_times
+        else:
+            if t_opt < min_t_opt:
+                min_t_opt = t_opt
+                opt_dict_states_times = dict_states_times
+
+    if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
+        plot_results(min_t_opt, dict_states, opt_dict_states_times, plot_path)
 
 
 states: dict = {
