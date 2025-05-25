@@ -1,9 +1,11 @@
+import math
+
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
 def run(dict_states: dict, initial_state_index: int = 1,
-        num_transitions: int = 1000000):
+        num_transitions: int = 1000000, error_threshold: float = 0.01, error_counter_percentage: float = 0.1):
 
     list_list_transitions: list = [[]] * len(dict_states)
 
@@ -44,7 +46,18 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
     t: int = 0
 
-    for n in range(num_transitions):
+    n: int = 0
+
+    t_top: float = 0
+
+    converge_counters: dict = {}
+
+    converge: bool = False
+
+    while not converge and n < num_transitions:
+        n0 = n
+        n += 1
+
         tup = dict_states[current_state_index]
 
         rate_lambda: float = tup[0]
@@ -85,9 +98,33 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
         error: float = empirical_distribution - stationary
 
+        abs_error: float = abs(error)
+
+        if abs_error < error_threshold:
+            if current_state_index not in converge_counters:
+                converge_counters[current_state_index] = 0
+
+            counter: int = converge_counters[current_state_index]
+            converge_counters[current_state_index] = counter + 1
+
+            counter0: int = 0
+
+            if counter > 100:
+                for state_index0 in states.keys():
+                    if state_index0 in converge_counters:
+                        counter = converge_counters[state_index0]
+
+                        if counter > 100:
+                            counter0 += 1
+
+                if counter0 == len(states):
+                    converge = True
+            else:
+                t_top = t
+
         list_state_times.append((t0, t, empirical_distribution, error))
 
-        print(f"n: {n}, t: {t}, tau: {tau}, lambda: {rate_lambda}"
+        print(f"n: {n0}, t: {t}, tau: {tau}, lambda: {rate_lambda}"
               f", accumulated: {accumulated_state_time}"
               f", empirical distribution: {empirical_distribution}"
               f", {current_state_index0}->{current_state_index}"
@@ -176,4 +213,4 @@ states: dict = {
     3: (3, {2: 1}, 1/7)
 }
 
-run(states, 1, 10000)
+run(states, 1, 100000)
