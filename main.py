@@ -4,9 +4,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
-def run(dict_states: dict, initial_state_index: int = 1,
-        num_transitions: int = 1000000, error_threshold: float = 0.01, error_counter_percentage: float = 0.1):
 
+def run_simulation(dict_states: dict, initial_state_index: int = 1,
+                   num_transitions: int = 100000, error_threshold: float = 0.01,
+                   error_counter_percentage: float = 0.1) -> tuple:
     error_counter0: float = error_counter_percentage * num_transitions
 
     list_list_transitions: list = [[]] * len(dict_states)
@@ -133,6 +134,10 @@ def run(dict_states: dict, initial_state_index: int = 1,
               f", {current_state_index0}->{current_state_index}"
               f", {error}")
 
+    return dict_states_times, t_opt
+
+
+def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict):
     plt.figure()
 
     plt.xlim(0, t_opt)
@@ -209,11 +214,18 @@ def run(dict_states: dict, initial_state_index: int = 1,
         print(min_advance)
 
 
+def run(dict_states: dict, initial_state_index: int = 1,
+        num_transitions: int = 100000, error_threshold: float = 0.01,
+        error_counter_percentage: float = 0.1, num_simulations: int = 10):
+    for i in range(num_simulations):
+        tup: tuple = run_simulation(dict_states, num_transitions, error_threshold,
+                                    error_counter_percentage, num_simulations)
+
 
 states: dict = {
-    1: (1, {2: 1}, 3/7),
-    2: (2, {1: 0.5, 3: 0.5}, 3/7),
-    3: (3, {2: 1}, 1/7)
+    1: (1, {2: 1}, 3 / 7),
+    2: (2, {1: 0.5, 3: 0.5}, 3 / 7),
+    3: (3, {2: 1}, 1 / 7)
 }
 
 run(states, 1, 100000)
