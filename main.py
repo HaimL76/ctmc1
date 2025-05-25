@@ -50,7 +50,7 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
     n: int = 0
 
-    t_top: float = 0
+    t_opt: float = 0
 
     converge_counters: dict = {}
 
@@ -104,7 +104,7 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
         if abs_error > error_threshold:
             converge_counters = {}
-            t_top = t
+            t_opt = t
         else:
             if current_state_index not in converge_counters:
                 converge_counters[current_state_index] = 0
@@ -135,7 +135,7 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
     plt.figure()
 
-    plt.xlim(0, t)
+    plt.xlim(0, t_opt)
     plt.ylim(0, 1)
 
     color = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(dict_states_times))))
