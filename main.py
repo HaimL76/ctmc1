@@ -7,6 +7,8 @@ import numpy as np
 def run(dict_states: dict, initial_state_index: int = 1,
         num_transitions: int = 1000000, error_threshold: float = 0.01, error_counter_percentage: float = 0.1):
 
+    error_counter0: float = error_counter_percentage * num_transitions
+
     list_list_transitions: list = [[]] * len(dict_states)
 
     list_q_rows: list = [[]] * len(dict_states)
@@ -100,7 +102,10 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
         abs_error: float = abs(error)
 
-        if abs_error < error_threshold:
+        if abs_error > error_threshold:
+            converge_counters = {}
+            t_top = t
+        else:
             if current_state_index not in converge_counters:
                 converge_counters[current_state_index] = 0
 
@@ -109,18 +114,16 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
             counter0: int = 0
 
-            if counter > 100:
+            if counter > error_counter0:
                 for state_index0 in states.keys():
                     if state_index0 in converge_counters:
                         counter = converge_counters[state_index0]
 
-                        if counter > 100:
+                        if counter > error_counter0:
                             counter0 += 1
 
                 if counter0 == len(states):
                     converge = True
-            else:
-                t_top = t
 
         list_state_times.append((t0, t, empirical_distribution, error))
 
