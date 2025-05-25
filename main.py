@@ -98,14 +98,25 @@ def run(dict_states: dict, initial_state_index: int = 1,
     plt.ylim(0, 1)
 
     for state_index in dict_states_times.keys():
-        state_times = dict_states_times[state_index]
+        stationary: float = 0
 
-        list_state_times: list = state_times[0]
+        if state_index in states:
+            state: tuple = states[state_index]
 
-        x: list = [tup[1] for tup in list_state_times]
-        y: list = [tup[2] for tup in list_state_times]
+            if isinstance(state, tuple) and len(state) > 0:
+                stationary = state[2]
 
-        plt.plot(x, y, label=f"empirical {state_index}")
+        if stationary > 0:
+            state_times = dict_states_times[state_index]
+
+            list_state_times: list = state_times[0]
+
+            x: list = [tup[1] for tup in list_state_times]
+            y: list = [tup[2] for tup in list_state_times]
+
+            plt.plot(x, y, label=f"empirical {state_index}")
+            plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=['b'], linestyles=['-'],
+                       label=f"stationary {state_index}")
 
     plt.legend()
     plt.show()
@@ -160,4 +171,4 @@ states: dict = {
     3: (3, {2: 1}, 1/7)
 }
 
-run(states, 1, 100000)
+run(states, 1, 10000)
