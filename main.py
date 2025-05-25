@@ -1,3 +1,4 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -97,6 +98,8 @@ def run(dict_states: dict, initial_state_index: int = 1,
     plt.xlim(0, t)
     plt.ylim(0, 1)
 
+    color = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(dict_states_times))))
+
     for state_index in dict_states_times.keys():
         stationary: float = 0
 
@@ -114,8 +117,10 @@ def run(dict_states: dict, initial_state_index: int = 1,
             x: list = [tup[1] for tup in list_state_times]
             y: list = [tup[2] for tup in list_state_times]
 
-            plt.plot(x, y, label=f"empirical {state_index}")
-            plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=['b'], linestyles=['-'],
+            c = next(color)
+
+            plt.plot(x, y, label=f"empirical {state_index}", c=c)
+            plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=c, linestyles=['-'],
                        label=f"stationary {state_index}")
 
     plt.legend()
