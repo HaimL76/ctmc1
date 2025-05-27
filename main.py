@@ -3,7 +3,7 @@ import math
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-
+from scipy.linalg import expm
 
 def run_simulation(dict_states: dict, initial_state_index: int = 1,
                    num_transitions: int = 100000, error_threshold: float = 0.01,
@@ -57,9 +57,30 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
 
     converge: bool = False
 
+    list_rates: list = [0] * len(dict_states)
+
+    for state_index in dict_states.keys():
+        state: tuple = dict_states[state_index]
+
+        actual_state_index: int = state_index - 1
+
+        list_rates[actual_state_index] = state[2]
+
+    arr_rates = np.array(list_rates)
+
     while not converge and n < num_transitions:
         n0 = n
         n += 1
+
+        tQ = t * Q
+
+        Pt = expm(tQ)
+
+        vector0 = Pt[0]
+
+        diff = vector0 - arr_rates
+
+        print(diff)
 
         tup = dict_states[current_state_index]
 
