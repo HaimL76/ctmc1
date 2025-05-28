@@ -147,13 +147,16 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
                 if counter0 == len(states):
                     converge = True
 
-        list_state_times.append((t0, t, empirical_distribution, error))
+        diff_state: float = diff[actual_state_index]
+        vec0: float = vector0[actual_state_index]
+
+        list_state_times.append((t0, t, empirical_distribution, vec0, error, diff_state))
 
         print(f"n: {n0}, t: {t}, tau: {tau}, lambda: {rate_lambda}"
               f", accumulated: {accumulated_state_time}"
               f", empirical distribution: {empirical_distribution}"
               f", {current_state_index0}->{current_state_index}"
-              f", {error}")
+              f", {error}, {vec0}, {diff_state}")
 
     return dict_states_times, t_opt
 
@@ -183,10 +186,13 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
 
             x: list = [tup[1] for tup in list_state_times]
             y: list = [tup[2] for tup in list_state_times]
+            y0: list = [tup[3] for tup in list_state_times]
 
             c = next(color)
 
             plt.plot(x, y, label=f"empirical {state_index}", c=c)
+            plt.plot(x, y0, label=f"Pt {state_index}", c=c)
+
             plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=c, linestyles=['-'],
                        label=f"stationary {state_index}")
 
