@@ -69,7 +69,8 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
     arr_rates = np.array(list_rates)
 
     while not converge and n < num_transitions:
-        n0 = n
+        step: int = n
+
         n += 1
 
         tQ = t * Q
@@ -89,7 +90,7 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
 
         scale = 1 / rate_lambda
 
-        tau = np.random.exponential(scale=scale)
+        wait_time = np.random.exponential(scale=scale)
 
         if current_state_index not in dict_states_times:
             dict_states_times[current_state_index] = ([], 0)
@@ -100,10 +101,10 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
 
         accumulated_state_time: float = tup_state[1]
 
-        accumulated_state_time += tau
+        accumulated_state_time += wait_time
 
-        t0 = t
-        t += tau
+        curr_time = t
+        t += wait_time
 
         empirical_distribution: float = accumulated_state_time / t
 
@@ -150,9 +151,9 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
         diff_state: float = diff[actual_state_index]
         vec0: float = vector0[actual_state_index]
 
-        list_state_times.append((t0, t, empirical_distribution, vec0, error, diff_state))
+        list_state_times.append((curr_time, t, empirical_distribution, vec0, error, diff_state))
 
-        print(f"n: {n0}, t: {t}, tau: {tau}, lambda: {rate_lambda}"
+        print(f"n: {step}, t: {t}, wait_time: {wait_time}, lambda: {rate_lambda}"
               f", accumulated: {accumulated_state_time}"
               f", empirical distribution: {empirical_distribution}"
               f", {current_state_index0}->{current_state_index}"
@@ -226,15 +227,15 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
 
                 times: tuple = list_state_times[index]
 
-                t0: float = times[1]
+                curr_time: float = times[1]
 
                 min_time: float = min_advance[0]
 
                 if min_time == 0:
-                    min_advance = (t0, actual_state_index, index)
+                    min_advance = (curr_time, actual_state_index, index)
                 else:
-                    if t0 < min_time:
-                        min_advance = (t0, actual_state_index, index)
+                    if curr_time < min_time:
+                        min_advance = (curr_time, actual_state_index, index)
 
         finished = not found
 
