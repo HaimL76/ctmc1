@@ -72,6 +72,9 @@ def run_simulation(error_measure_mode: bool,
 
     arr_rates = np.array(list_rates)
 
+    max_error: int = 0
+    min_error: int = 0
+
     while not converge and n < num_transitions:
         step: int = n
 
@@ -131,7 +134,18 @@ def run_simulation(error_measure_mode: bool,
 
         abs_error: float = abs(error)
 
-        if not error_measure_mode:
+        if error_measure_mode:
+            error = math.log(abs_error)
+
+        if error < min_error:
+            min_error = error
+
+        if error > max_error:
+            max_error = error
+
+        if error_measure_mode:
+            t_opt = t
+        else:
             if abs_error > error_threshold:
                 converge_counters = {}
                 t_opt = t
@@ -176,14 +190,15 @@ def run_simulation(error_measure_mode: bool,
 
         print(message)
 
-    return dict_states_times, t_opt
+    return dict_states_times, t_opt, min_error, max_error
 
-def plot_error_results(t_opt: float, dict_states: dict, dict_states_times: dict,
-                 plot_path: str = 'ctmc1_error.png'):
+def plot_error_results(t_opt: float, min_error: float, max_error: float,
+                       dict_states: dict, dict_states_times: dict,
+                       plot_path: str = 'ctmc1_error.png'):
     plt.figure()
 
     plt.xlim(0, t_opt)
-    plt.ylim(0, 1)
+    plt.ylim(min_error, max_error)
 
     color = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(dict_states_times))))
 
@@ -206,10 +221,7 @@ def plot_error_results(t_opt: float, dict_states: dict, dict_states_times: dict,
 
             c = next(color)
 
-            plt.plot(x, y, label=f"empirical {state_index}", c=c)
-
-            plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=c, linestyles=['-'],
-                       label=f"stationary {state_index}")
+            plt.plot(x, y, label=f"error {state_index}", c=c)
 
     plt.legend()
 
@@ -353,11 +365,13 @@ def run(dict_states: dict, initial_state_index: int = 1,
     opt_dict_states_times: dict = {}
 
     tup: tuple = run_simulation(True,
-                                dict_states, initial_state_index, 1000000,
+                                dict_states, initial_state_index, 100000,
                                 error_threshold, error_counter_percentage)
 
     t_opt: float = tup[1]
     dict_states_times = tup[0]
+    min_error: float = tup[2]
+    max_error: floaf = tup[3]
 
     if min_t_opt == 0:
         min_t_opt = t_opt
@@ -368,7 +382,8 @@ def run(dict_states: dict, initial_state_index: int = 1,
             opt_dict_states_times = dict_states_times
 
     if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
-        plot_error_results(min_t_opt, dict_states, opt_dict_states_times, 'error_' + plot_path)
+        plot_error_results(min_t_opt, min_error, max_error, dict_states,
+                           opt_dict_states_times, 'error_' + plot_path)
 
     for i in range(num_simulations):
         tup: tuple = run_simulation(False,
