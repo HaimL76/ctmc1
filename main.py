@@ -5,14 +5,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import expm
 
-def run_simulation(dict_states: dict, initial_state_index: int = 1,
+
+def run_simulation(error_measure_mode: bool,
+                   dict_states: dict, initial_state_index: int = 1,
                    num_transitions: int = 100000, error_threshold: float = 0.01,
                    error_counter_percentage: float = 0.1) -> tuple:
+    num_states: int = len(dict_states)
+
     error_counter0: float = error_counter_percentage * num_transitions
 
-    list_list_transitions: list = [[]] * len(dict_states)
+    list_list_transitions: list = [[]] * num_states
 
-    list_q_rows: list = [[]] * len(dict_states)
+    list_q_rows: list = [[]] * num_states
 
     for state_index in dict_states.keys():
         actual_state_index: int = state_index - 1
@@ -22,8 +26,8 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
         rate_lambda: float = state[0]
         transitions: dict = state[1]
 
-        list_transitions: list = [0] * len(dict_states)
-        list_q_columns: list = [0] * len(dict_states)
+        list_transitions: list = [0] * num_states
+        list_q_columns: list = [0] * num_states
 
         for trans in transitions.keys():
             actual_transition_index: int = trans - 1
@@ -57,7 +61,7 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
 
     converge: bool = False
 
-    list_rates: list = [0] * len(dict_states)
+    list_rates: list = [0] * num_states
 
     for state_index in dict_states.keys():
         state: tuple = dict_states[state_index]
@@ -73,15 +77,17 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
 
         n += 1
 
-        tQ = t * Q
+        diff = np.array([0] * num_states)
+        vector0 = diff
 
-        Pt = expm(tQ)
+        if not error_measure_mode:
+            tQ = t * Q
 
-        vector0 = Pt[0]
+            Pt = expm(tQ)
 
-        diff = vector0 - arr_rates
+            vector0 = Pt[0]
 
-        print(diff)
+            diff = vector0 - arr_rates
 
         tup = dict_states[current_state_index]
 
@@ -125,39 +131,50 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
 
         abs_error: float = abs(error)
 
-        if abs_error > error_threshold:
-            converge_counters = {}
-            t_opt = t
+        if not error_measure_mode:
+            if abs_error > error_threshold:
+                converge_counters = {}
+                t_opt = t
+            else:
+                if current_state_index not in converge_counters:
+                    converge_counters[current_state_index] = 0
+
+                counter: int = converge_counters[current_state_index]
+                converge_counters[current_state_index] = counter + 1
+
+                counter0: int = 0
+
+                if counter > error_counter0:
+                    for state_index0 in states.keys():
+                        if state_index0 in converge_counters:
+                            counter = converge_counters[state_index0]
+
+                            if counter > error_counter0:
+                                counter0 += 1
+
+                    if counter0 == len(states):
+                        converge = True
+
+        if error_measure_mode:
+            tup: tuple = (curr_time, t, empirical_distribution, error)
         else:
-            if current_state_index not in converge_counters:
-                converge_counters[current_state_index] = 0
+            diff_state: float = diff[actual_state_index]
+            vec0: float = vector0[actual_state_index]
+            tup: tuple = (curr_time, t, empirical_distribution, error, vec0, diff_state)
 
-            counter: int = converge_counters[current_state_index]
-            converge_counters[current_state_index] = counter + 1
+        list_state_times.append(tup)
 
-            counter0: int = 0
+        message: str = f"n: {step}, t: {t}"
+        message += f", wait_time: {wait_time}, lambda: {rate_lambda}"
+        message += f", accumulated: {accumulated_state_time}"
+        message += f", empirical distribution: {empirical_distribution}"
+        message += f", {current_state_index0}->{current_state_index}"
+        message += f", {error}"
 
-            if counter > error_counter0:
-                for state_index0 in states.keys():
-                    if state_index0 in converge_counters:
-                        counter = converge_counters[state_index0]
+        if not error_measure_mode:
+            message += f", {vec0}, {diff_state}"
 
-                        if counter > error_counter0:
-                            counter0 += 1
-
-                if counter0 == len(states):
-                    converge = True
-
-        diff_state: float = diff[actual_state_index]
-        vec0: float = vector0[actual_state_index]
-
-        list_state_times.append((curr_time, t, empirical_distribution, vec0, error, diff_state))
-
-        print(f"n: {step}, t: {t}, wait_time: {wait_time}, lambda: {rate_lambda}"
-              f", accumulated: {accumulated_state_time}"
-              f", empirical distribution: {empirical_distribution}"
-              f", {current_state_index0}->{current_state_index}"
-              f", {error}, {vec0}, {diff_state}")
+        print(message)
 
     return dict_states_times, t_opt
 
@@ -254,8 +271,13 @@ def run(dict_states: dict, initial_state_index: int = 1,
     min_t_opt: float = 0
     opt_dict_states_times: dict = {}
 
+    tup: tuple = run_simulation(True,
+                                dict_states, initial_state_index, 1000000,
+                                error_threshold, error_counter_percentage)
+
     for i in range(num_simulations):
-        tup: tuple = run_simulation(dict_states, initial_state_index, num_transitions,
+        tup: tuple = run_simulation(False,
+                                    dict_states, initial_state_index, num_transitions,
                                     error_threshold, error_counter_percentage)
 
         t_opt: float = tup[1]
