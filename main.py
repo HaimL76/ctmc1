@@ -134,8 +134,8 @@ def run_simulation(error_measure_mode: bool,
 
         abs_error: float = abs(error)
 
-        if error_measure_mode:
-            error = math.log(abs_error)
+        #if error_measure_mode:
+         #   error = math.log(abs_error)
 
         if error < min_error:
             min_error = error
