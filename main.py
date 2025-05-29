@@ -178,6 +178,87 @@ def run_simulation(error_measure_mode: bool,
 
     return dict_states_times, t_opt
 
+def plot_error_results(t_opt: float, dict_states: dict, dict_states_times: dict,
+                 plot_path: str = 'ctmc1_error.png'):
+    plt.figure()
+
+    plt.xlim(0, t_opt)
+    plt.ylim(0, 1)
+
+    color = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(dict_states_times))))
+
+    for state_index in dict_states_times.keys():
+        stationary: float = 0
+
+        if state_index in states:
+            state: tuple = states[state_index]
+
+            if isinstance(state, tuple) and len(state) > 0:
+                stationary = state[2]
+
+        if stationary > 0:
+            state_times = dict_states_times[state_index]
+
+            list_state_times: list = state_times[0]
+
+            x: list = [tup[1] for tup in list_state_times]
+            y: list = [tup[-1] for tup in list_state_times]
+
+            c = next(color)
+
+            plt.plot(x, y, label=f"empirical {state_index}", c=c)
+
+            plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=c, linestyles=['-'],
+                       label=f"stationary {state_index}")
+
+    plt.legend()
+
+    if plot_path:
+        plt.savefig(plot_path)
+
+    plt.show()
+
+    indices: list = [0] * len(dict_states)
+
+    finished: bool = False
+
+    while not finished:
+        min_advance: tuple = (0, 0, 0)
+
+        found: bool = False
+
+        for state_index in dict_states_times.keys():
+            state_times = dict_states_times[state_index]
+
+            list_state_times: list = state_times[0]
+
+            actual_state_index: int = state_index - 1
+
+            index: int = indices[actual_state_index]
+
+            if index < len(list_state_times):
+                found = True
+
+                times: tuple = list_state_times[index]
+
+                curr_time: float = times[1]
+
+                min_time: float = min_advance[0]
+
+                if min_time == 0:
+                    min_advance = (curr_time, actual_state_index, index)
+                else:
+                    if curr_time < min_time:
+                        min_advance = (curr_time, actual_state_index, index)
+
+        finished = not found
+
+        actual_state_index: int = min_advance[1]
+        index: int = min_advance[2]
+
+        indices[actual_state_index] = index + 1
+
+        print(min_advance)
 
 def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
                  plot_path: str = 'ctmc1.png'):
@@ -274,6 +355,20 @@ def run(dict_states: dict, initial_state_index: int = 1,
     tup: tuple = run_simulation(True,
                                 dict_states, initial_state_index, 1000000,
                                 error_threshold, error_counter_percentage)
+
+    t_opt: float = tup[1]
+    dict_states_times = tup[0]
+
+    if min_t_opt == 0:
+        min_t_opt = t_opt
+        opt_dict_states_times = dict_states_times
+    else:
+        if t_opt < min_t_opt:
+            min_t_opt = t_opt
+            opt_dict_states_times = dict_states_times
+
+    if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
+        plot_error_results(min_t_opt, dict_states, opt_dict_states_times, 'error_' + plot_path)
 
     for i in range(num_simulations):
         tup: tuple = run_simulation(False,
