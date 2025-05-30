@@ -7,7 +7,8 @@ from scipy.linalg import expm
 
 def run_simulation(dict_states: dict, initial_state_index: int = 1,
                    num_transitions: int = 100000, error_threshold: float = 0.01,
-                   error_counter_percentage: float = 0.1) -> tuple:
+                   error_counter_percentage: float = 0.1,
+                   calculate_matrix_exponent: bool = True) -> tuple:
     error_counter0: float = error_counter_percentage * num_transitions
 
     list_list_transitions: list = [[]] * len(dict_states)
@@ -69,18 +70,24 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
 
     arr_rates = np.array(list_rates)
 
+    num_states: int = len(dict_states)
+
     while not converge and n < num_transitions:
         step: int = n
 
         n += 1
 
-        tQ = t * Q
+        diff = [0] * num_states
+        vector0 = [0] * num_states
 
-        Pt = expm(tQ)
+        if calculate_matrix_exponent:
+            tQ = t * Q
 
-        vector0 = Pt[0]
+            Pt = expm(tQ)
 
-        diff = vector0 - arr_rates
+            vector0 = Pt[0]
+
+            diff = vector0 - arr_rates
 
         tup = dict_states[current_state_index]
 
@@ -250,13 +257,14 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
 def run(dict_states: dict, initial_state_index: int = 1,
         num_transitions: int = 100000, error_threshold: float = 0.01,
         error_counter_percentage: float = 0.1, num_simulations: int = 10,
-        plot_path: str = 'ctmc1.png'):
+        plot_path: str = 'ctmc1.png', calculate_matrix_exponent: bool = True):
     min_t_opt: float = 0
     opt_dict_states_times: dict = {}
 
     for i in range(num_simulations):
         tup: tuple = run_simulation(dict_states, initial_state_index, num_transitions,
-                                    error_threshold, error_counter_percentage)
+                                    error_threshold, error_counter_percentage,
+                                    calculate_matrix_exponent=calculate_matrix_exponent)
 
         t_opt: float = tup[1]
         dict_states_times = tup[0]
@@ -279,4 +287,5 @@ states: dict = {
     3: (3, {2: 1}, 1 / 7)
 }
 
-run(states, 1, 10000, num_simulations=3)
+run(states, 1, 10000000, num_simulations=1,
+    calculate_matrix_exponent=False)
