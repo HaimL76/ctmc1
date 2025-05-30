@@ -134,8 +134,8 @@ def run_simulation(error_measure_mode: bool,
 
         abs_error: float = abs(error)
 
-        #if error_measure_mode:
-         #   error = math.log(abs_error)
+        # if error_measure_mode:
+        #   error = math.log(abs_error)
 
         if error < min_error:
             min_error = error
@@ -178,12 +178,12 @@ def run_simulation(error_measure_mode: bool,
 
         list_state_times.append(tup)
 
-        message: str = f"n: {step}, t: {t}"
-        message += f", wait_time: {wait_time}, lambda: {rate_lambda}"
-        message += f", accumulated: {accumulated_state_time}"
-        message += f", empirical distribution: {empirical_distribution}"
-        message += f", {current_state_index0}->{current_state_index}"
-        message += f", {error}"
+        message: str = f"""n: {step}, t: {t}
+            , wait_time: {wait_time}, lambda: {rate_lambda}"
+            , accumulated: {accumulated_state_time}"
+            , empirical distribution: {empirical_distribution}"
+            , {current_state_index0}->{current_state_index}"
+            , {error}"""
 
         if not error_measure_mode:
             message += f", {vec0}, {diff_state}"
@@ -191,6 +191,7 @@ def run_simulation(error_measure_mode: bool,
         print(message)
 
     return dict_states_times, t_opt, min_error, max_error
+
 
 def plot_error_results(t_opt: float, min_error: float, max_error: float,
                        dict_states: dict, dict_states_times: dict,
@@ -271,6 +272,7 @@ def plot_error_results(t_opt: float, min_error: float, max_error: float,
         indices[actual_state_index] = index + 1
 
         print(min_advance)
+
 
 def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
                  plot_path: str = 'ctmc1.png'):
@@ -371,7 +373,7 @@ def run(dict_states: dict, initial_state_index: int = 1,
     t_opt: float = tup[1]
     dict_states_times = tup[0]
     min_error: float = tup[2]
-    max_error: floaf = tup[3]
+    max_error: float = tup[3]
 
     if min_t_opt == 0:
         min_t_opt = t_opt
@@ -411,4 +413,4 @@ states: dict = {
     3: (3, {2: 1}, 1 / 7)
 }
 
-run(states, 1, 100000)
+run(states, 1, 10000, num_simulations=3)
