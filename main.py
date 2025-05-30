@@ -6,7 +6,7 @@ import numpy as np
 from scipy.linalg import expm
 
 
-def run_simulation(dict_states: dict, initial_state_index: int = 1,
+def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
                    num_transitions: int = 100000, error_threshold: float = 0.01,
                    error_counter_percentage: float = 0.1,
                    calculate_matrix_exponent: bool = True) -> tuple:
@@ -74,6 +74,8 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
         list_rates[actual_state_index] = state[2]
 
     arr_rates = np.array(list_rates)
+
+    print_count: int = int(num_transitions * 0.1)
 
     while not converge and n < num_transitions:
         step: int = n
@@ -171,11 +173,12 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
 
         list_state_times.append((curr_time, t, empirical_distribution, vec0, error, diff_state))
 
-        print(f"n: {step}, t: {t}, wait_time: {wait_time}, lambda: {rate_lambda}"
-              f", accumulated: {accumulated_state_time}"
-              f", empirical distribution: {empirical_distribution}"
-              f", {current_state_index0}->{current_state_index}"
-              f", {error}, {vec0}, {diff_state}")
+        if step % print_count == 0:
+            print(f"index: {index}, n: {step}, t: {t}, wait_time: {wait_time}, lambda: {rate_lambda}"
+                f", accumulated: {accumulated_state_time}"
+                f", empirical distribution: {empirical_distribution}"
+                f", {current_state_index0}->{current_state_index}"
+                f", {error}, {vec0}, {diff_state}")
 
     return dict_states_times, t_opt, n_opt, min_error, max_error
 
@@ -275,8 +278,10 @@ def run(dict_states: dict, initial_state_index: int = 1,
     min_t_opt: float = 999999999
     opt_dict_states_times: dict = {}
 
+    tops: list = [0] * num_simulations
+
     for i in range(num_simulations):
-        tup: tuple = run_simulation(dict_states, initial_state_index, num_transitions,
+        tup: tuple = run_simulation(i, dict_states, initial_state_index, num_transitions,
                                     error_threshold, error_counter_percentage,
                                     calculate_matrix_exponent=calculate_matrix_exponent)
 
@@ -284,6 +289,8 @@ def run(dict_states: dict, initial_state_index: int = 1,
         dict_states_times = tup[0]
         min_error: float = tup[3]
         max_error: float = tup[4]
+
+        tops[i] = t_opt
 
         if min_t_opt == 0:
             min_t_opt = t_opt
@@ -293,9 +300,13 @@ def run(dict_states: dict, initial_state_index: int = 1,
                 min_t_opt = t_opt
                 opt_dict_states_times = dict_states_times
 
+    plt.hist(tops)
+    plt.savefig(f"hist_{plot_path}")
+    plt.show()
+
     if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
         plot_error(min_t_opt, min_error, max_error, dict_states, opt_dict_states_times,
-                   "error_" + plot_path)
+                   f"error_{plot_path}")
         plot_results(min_t_opt, dict_states, opt_dict_states_times, plot_path)
 
 
@@ -305,5 +316,6 @@ states: dict = {
     3: (3, {2: 1}, 1 / 7)
 }
 
-run(states, 1, 100000, num_simulations=1,
+run(states, 1, 1000,
+    error_threshold=0.01, num_simulations=10000,
     calculate_matrix_exponent=False)
