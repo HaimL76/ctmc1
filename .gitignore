@@ -1,0 +1,7 @@
+# Ignore everything
+*
+
+# Except the following file types
+!.gitignore
+!*.py
+!*.tex
