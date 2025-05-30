@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import expm
 
+
 def run_simulation(dict_states: dict, initial_state_index: int = 1,
                    num_transitions: int = 100000, error_threshold: float = 0.01,
                    error_counter_percentage: float = 0.1,
                    calculate_matrix_exponent: bool = True) -> tuple:
-
     num_states: int = len(dict_states)
 
     error_counter0: float = error_counter_percentage * num_transitions
@@ -177,12 +177,12 @@ def run_simulation(dict_states: dict, initial_state_index: int = 1,
               f", {current_state_index0}->{current_state_index}"
               f", {error}, {vec0}, {diff_state}")
 
-    return dict_states_times, t_opt,  n_opt, min_error, max_error
+    return dict_states_times, t_opt, n_opt, min_error, max_error
 
 
 def plot_error(t_opt: float, min_error: float, max_error: float,
                dict_states: dict, dict_states_times: dict,
-                 plot_path: str = 'ctmc1_error.png'):
+               plot_path: str = 'ctmc1_error.png'):
     plt.figure()
 
     plt.xlim(0, t_opt)
@@ -211,12 +211,16 @@ def plot_error(t_opt: float, min_error: float, max_error: float,
 
             plt.plot(x, y, label=f"error {state_index}", c=c)
 
+    plt.xlabel("t")
+    plt.ylabel("log of error")
+
     plt.legend()
 
     if plot_path:
         plt.savefig(plot_path)
 
     plt.show()
+
 
 def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
                  plot_path: str = 'ctmc1.png'):
@@ -253,6 +257,9 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
             plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=c, linestyles=['-'],
                        label=f"stationary {state_index}")
 
+    plt.xlabel("t")
+    plt.ylabel("distribution")
+
     plt.legend()
 
     if plot_path:
@@ -288,7 +295,7 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
     if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
         plot_error(min_t_opt, min_error, max_error, dict_states, opt_dict_states_times,
-                   "error+" + plot_path)
+                   "error_" + plot_path)
         plot_results(min_t_opt, dict_states, opt_dict_states_times, plot_path)
 
 
@@ -298,5 +305,5 @@ states: dict = {
     3: (3, {2: 1}, 1 / 7)
 }
 
-run(states, 1, 100000, num_simulations=3,
+run(states, 1, 100000, num_simulations=1,
     calculate_matrix_exponent=False)
