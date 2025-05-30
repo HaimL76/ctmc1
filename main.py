@@ -5,18 +5,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.linalg import expm
 
-
-def run_simulation(error_measure_mode: bool,
-                   dict_states: dict, initial_state_index: int = 1,
+def run_simulation(dict_states: dict, initial_state_index: int = 1,
                    num_transitions: int = 100000, error_threshold: float = 0.01,
                    error_counter_percentage: float = 0.1) -> tuple:
-    num_states: int = len(dict_states)
-
     error_counter0: float = error_counter_percentage * num_transitions
 
-    list_list_transitions: list = [[]] * num_states
+    list_list_transitions: list = [[]] * len(dict_states)
 
-    list_q_rows: list = [[]] * num_states
+    list_q_rows: list = [[]] * len(dict_states)
 
     for state_index in dict_states.keys():
         actual_state_index: int = state_index - 1
@@ -26,8 +22,8 @@ def run_simulation(error_measure_mode: bool,
         rate_lambda: float = state[0]
         transitions: dict = state[1]
 
-        list_transitions: list = [0] * num_states
-        list_q_columns: list = [0] * num_states
+        list_transitions: list = [0] * len(dict_states)
+        list_q_columns: list = [0] * len(dict_states)
 
         for trans in transitions.keys():
             actual_transition_index: int = trans - 1
@@ -56,12 +52,13 @@ def run_simulation(error_measure_mode: bool,
     n: int = 0
 
     t_opt: float = 0
+    n_opt: int = 0
 
     converge_counters: dict = {}
 
     converge: bool = False
 
-    list_rates: list = [0] * num_states
+    list_rates: list = [0] * len(dict_states)
 
     for state_index in dict_states.keys():
         state: tuple = dict_states[state_index]
@@ -72,25 +69,18 @@ def run_simulation(error_measure_mode: bool,
 
     arr_rates = np.array(list_rates)
 
-    max_error: int = 0
-    min_error: int = 0
-
     while not converge and n < num_transitions:
         step: int = n
 
         n += 1
 
-        diff = np.array([0] * num_states)
-        vector0 = diff
+        tQ = t * Q
 
-        if not error_measure_mode:
-            tQ = t * Q
+        Pt = expm(tQ)
 
-            Pt = expm(tQ)
+        vector0 = Pt[0]
 
-            vector0 = Pt[0]
-
-            diff = vector0 - arr_rates
+        diff = vector0 - arr_rates
 
         tup = dict_states[current_state_index]
 
@@ -134,144 +124,42 @@ def run_simulation(error_measure_mode: bool,
 
         abs_error: float = abs(error)
 
-        # if error_measure_mode:
-        #   error = math.log(abs_error)
-
-        if error < min_error:
-            min_error = error
-
-        if error > max_error:
-            max_error = error
-
-        if error_measure_mode:
+        if abs_error > error_threshold:
+            converge_counters = {}
             t_opt = t
+            n_opt = n
         else:
-            if abs_error > error_threshold:
-                converge_counters = {}
-                t_opt = t
-            else:
-                if current_state_index not in converge_counters:
-                    converge_counters[current_state_index] = 0
+            if current_state_index not in converge_counters:
+                converge_counters[current_state_index] = 0
 
-                counter: int = converge_counters[current_state_index]
-                converge_counters[current_state_index] = counter + 1
+            counter: int = converge_counters[current_state_index]
+            converge_counters[current_state_index] = counter + 1
 
-                counter0: int = 0
+            counter0: int = 0
 
-                if counter > error_counter0:
-                    for state_index0 in states.keys():
-                        if state_index0 in converge_counters:
-                            counter = converge_counters[state_index0]
+            if counter > error_counter0:
+                for state_index0 in states.keys():
+                    if state_index0 in converge_counters:
+                        counter = converge_counters[state_index0]
 
-                            if counter > error_counter0:
-                                counter0 += 1
+                        if counter > error_counter0:
+                            counter0 += 1
 
-                    if counter0 == len(states):
-                        converge = True
+                if counter0 == len(states):
+                    converge = True
 
-        if error_measure_mode:
-            tup: tuple = (curr_time, t, empirical_distribution, error)
-        else:
-            diff_state: float = diff[actual_state_index]
-            vec0: float = vector0[actual_state_index]
-            tup: tuple = (curr_time, t, empirical_distribution, error, vec0, diff_state)
+        diff_state: float = diff[actual_state_index]
+        vec0: float = vector0[actual_state_index]
 
-        list_state_times.append(tup)
+        list_state_times.append((curr_time, t, empirical_distribution, vec0, error, diff_state))
 
-        message: str = f"""n: {step}, t: {t}
-            , wait_time: {wait_time}, lambda: {rate_lambda}"
-            , accumulated: {accumulated_state_time}"
-            , empirical distribution: {empirical_distribution}"
-            , {current_state_index0}->{current_state_index}"
-            , {error}"""
+        print(f"n: {step}, t: {t}, wait_time: {wait_time}, lambda: {rate_lambda}"
+              f", accumulated: {accumulated_state_time}"
+              f", empirical distribution: {empirical_distribution}"
+              f", {current_state_index0}->{current_state_index}"
+              f", {error}, {vec0}, {diff_state}")
 
-        if not error_measure_mode:
-            message += f", {vec0}, {diff_state}"
-
-        print(message)
-
-    return dict_states_times, t_opt, min_error, max_error
-
-
-def plot_error_results(t_opt: float, min_error: float, max_error: float,
-                       dict_states: dict, dict_states_times: dict,
-                       plot_path: str = 'ctmc1_error.png'):
-    plt.figure()
-
-    plt.xlim(0, t_opt)
-    plt.ylim(min_error, max_error)
-
-    color = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(dict_states_times))))
-
-    for state_index in dict_states_times.keys():
-        stationary: float = 0
-
-        if state_index in states:
-            state: tuple = states[state_index]
-
-            if isinstance(state, tuple) and len(state) > 0:
-                stationary = state[2]
-
-        if stationary > 0:
-            state_times = dict_states_times[state_index]
-
-            list_state_times: list = state_times[0]
-
-            x: list = [tup[1] for tup in list_state_times]
-            y: list = [tup[-1] for tup in list_state_times]
-
-            c = next(color)
-
-            plt.plot(x, y, label=f"error {state_index}", c=c)
-
-    plt.legend()
-
-    if plot_path:
-        plt.savefig(plot_path)
-
-    plt.show()
-
-    indices: list = [0] * len(dict_states)
-
-    finished: bool = False
-
-    while not finished:
-        min_advance: tuple = (0, 0, 0)
-
-        found: bool = False
-
-        for state_index in dict_states_times.keys():
-            state_times = dict_states_times[state_index]
-
-            list_state_times: list = state_times[0]
-
-            actual_state_index: int = state_index - 1
-
-            index: int = indices[actual_state_index]
-
-            if index < len(list_state_times):
-                found = True
-
-                times: tuple = list_state_times[index]
-
-                curr_time: float = times[1]
-
-                min_time: float = min_advance[0]
-
-                if min_time == 0:
-                    min_advance = (curr_time, actual_state_index, index)
-                else:
-                    if curr_time < min_time:
-                        min_advance = (curr_time, actual_state_index, index)
-
-        finished = not found
-
-        actual_state_index: int = min_advance[1]
-        index: int = min_advance[2]
-
-        indices[actual_state_index] = index + 1
-
-        print(min_advance)
+    return dict_states_times, t_opt,  n_opt
 
 
 def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
@@ -366,30 +254,8 @@ def run(dict_states: dict, initial_state_index: int = 1,
     min_t_opt: float = 0
     opt_dict_states_times: dict = {}
 
-    tup: tuple = run_simulation(True,
-                                dict_states, initial_state_index, 100000,
-                                error_threshold, error_counter_percentage)
-
-    t_opt: float = tup[1]
-    dict_states_times = tup[0]
-    min_error: float = tup[2]
-    max_error: float = tup[3]
-
-    if min_t_opt == 0:
-        min_t_opt = t_opt
-        opt_dict_states_times = dict_states_times
-    else:
-        if t_opt < min_t_opt:
-            min_t_opt = t_opt
-            opt_dict_states_times = dict_states_times
-
-    if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
-        plot_error_results(min_t_opt, min_error, max_error, dict_states,
-                           opt_dict_states_times, 'error_' + plot_path)
-
     for i in range(num_simulations):
-        tup: tuple = run_simulation(False,
-                                    dict_states, initial_state_index, num_transitions,
+        tup: tuple = run_simulation(dict_states, initial_state_index, num_transitions,
                                     error_threshold, error_counter_percentage)
 
         t_opt: float = tup[1]
