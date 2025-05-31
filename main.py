@@ -65,16 +65,16 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
 
     converge: bool = False
 
-    list_rates: list = [0] * len(dict_states)
+    list_stat_dist: list = [0] * len(dict_states)
 
     for state_index in dict_states.keys():
         state: tuple = dict_states[state_index]
 
         actual_state_index: int = state_index - 1
 
-        list_rates[actual_state_index] = state[2]
+        list_stat_dist[actual_state_index] = state[2]
 
-    arr_rates = np.array(list_rates)
+    arr_stat_dist = np.array(list_stat_dist)
 
     print_count: int = int(num_transitions * 0.1)
 
@@ -83,8 +83,9 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
 
         n += 1
 
-        diff = [0] * num_states
         vector0 = [0] * num_states
+
+        error_pt = [0] * num_states
 
         if calculate_matrix_exponent:
             tQ = t * Q
@@ -93,7 +94,7 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
 
             vector0 = Pt[0]
 
-            diff = vector0 - arr_rates
+            error_pt = vector0 - arr_stat_dist
 
         tup = dict_states[current_state_index]
 
@@ -169,17 +170,17 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
                 if counter0 == len(states):
                     converge = True
 
-        diff_state: float = diff[actual_state_index]
+        error_pt_state: float = error_pt[actual_state_index]
         vec0: float = vector0[actual_state_index]
 
-        list_state_times.append((curr_time, t, empirical_distribution, vec0, error, diff_state))
+        list_state_times.append((curr_time, t, empirical_distribution, vec0, error, error_pt_state))
 
         if step % print_count == 0:
             print(f"index: {index}, n: {step}, t: {t}, wait_time: {wait_time}, lambda: {rate_lambda}"
                 f", accumulated: {accumulated_state_time}"
                 f", empirical distribution: {empirical_distribution}"
                 f", {current_state_index0}->{current_state_index}"
-                f", {error}, {vec0}, {diff_state}")
+                f", {error}, {vec0}, {error_pt_state}")
 
     return dict_states_times, t_opt, n_opt, min_error, max_error, t
 
