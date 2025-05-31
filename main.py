@@ -261,7 +261,7 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
             plt.plot(x, y, label=f"empirical {state_index}", c=c)
 
             if plot_pt:
-                plt.plot(x, y0, label=f"Pt {state_index}", c=c)
+                plt.plot(x, y0, label=f"Pt {state_index}", c="black")
 
             plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=c, linestyles=['-'],
                        label=f"stationary {state_index}")
@@ -340,10 +340,12 @@ states: dict = {
     3: (3, {2: 1}, 1 / 7)
 }
 
-run(states, 1, 1000,
-    error_threshold=0.01, num_simulations=100,
+run(states, 1, 10000,
+    error_threshold=0.0001, num_simulations=100,
+    error_counter_percentage=0.01,
     calculate_matrix_exponent=False, dir_name="no-pt")
 
 run(states, 1, 1000,
-    error_threshold=0.01, num_simulations=3,
+    error_threshold=0.0001, num_simulations=3,
+    error_counter_percentage=0.1,
     calculate_matrix_exponent=True, dir_name="with-pt")
