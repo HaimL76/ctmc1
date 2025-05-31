@@ -180,12 +180,12 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
                 f", {current_state_index0}->{current_state_index}"
                 f", {error}, {vec0}, {diff_state}")
 
-    return dict_states_times, t_opt, n_opt, min_error, max_error
+    return dict_states_times, t_opt, n_opt, min_error, max_error, t
 
 
 def plot_error(t_opt: float, min_error: float, max_error: float,
                dict_states: dict, dict_states_times: dict,
-               plot_path: str = 'ctmc1_error.png'):
+               plot_path: str = 'ctmc1_error.png', t_max: float = 0):
     plt.figure()
 
     plt.xlim(0, t_opt)
@@ -226,7 +226,8 @@ def plot_error(t_opt: float, min_error: float, max_error: float,
 
 
 def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
-                 plot_path: str = 'ctmc1.png'):
+                 plot_path: str = 'ctmc1.png', t_max: float = 0,
+                 plot_pt: bool = True):
     plt.figure()
 
     plt.xlim(0, t_opt)
@@ -255,7 +256,9 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
             c = next(color)
 
             plt.plot(x, y, label=f"empirical {state_index}", c=c)
-            plt.plot(x, y0, label=f"Pt {state_index}", c=c)
+
+            if plot_pt:
+                plt.plot(x, y0, label=f"Pt {state_index}", c=c)
 
             plt.hlines(y=[stationary], xmin=0, xmax=x[-1], colors=c, linestyles=['-'],
                        label=f"stationary {state_index}")
@@ -289,6 +292,7 @@ def run(dict_states: dict, initial_state_index: int = 1,
         dict_states_times = tup[0]
         min_error: float = tup[3]
         max_error: float = tup[4]
+        t_max: float = tup[5]
 
         tops[i] = t_opt
 
@@ -306,8 +310,9 @@ def run(dict_states: dict, initial_state_index: int = 1,
 
     if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
         plot_error(min_t_opt, min_error, max_error, dict_states, opt_dict_states_times,
-                   f"error_{plot_path}")
-        plot_results(min_t_opt, dict_states, opt_dict_states_times, plot_path)
+                   f"error_{plot_path}", t_max)
+        plot_results(min_t_opt, dict_states, opt_dict_states_times, plot_path, t_max,
+                     calculate_matrix_exponent)
 
 
 states: dict = {
@@ -316,6 +321,10 @@ states: dict = {
     3: (3, {2: 1}, 1 / 7)
 }
 
-run(states, 1, 1000,
-    error_threshold=0.01, num_simulations=10000,
+run(states, 1, 10000,
+    error_threshold=0.01, num_simulations=1000,
     calculate_matrix_exponent=False)
+
+run(states, 1, 100000,
+    error_threshold=0.01, num_simulations=3,
+    calculate_matrix_exponent=True)
