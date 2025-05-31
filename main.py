@@ -366,7 +366,7 @@ states: dict = {
 }
 
 run(states, 1, 10000,
-    error_threshold=0.0001, num_simulations=100,
+    error_threshold=0.0001, num_simulations=1000,
     error_counter_percentage=0.01,
     calculate_matrix_exponent=False, dir_name="no-pt")
 
