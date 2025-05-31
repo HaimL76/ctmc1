@@ -140,11 +140,12 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
 
         error = math.log(abs_error)
 
-        if error < min_error:
-            min_error = error
+        if not calculate_matrix_exponent:
+            if error < min_error:
+                min_error = error
 
-        if error > max_error:
-            max_error = error
+            if error > max_error:
+                max_error = error
 
         if abs_error > error_threshold:
             converge_counters = {}
@@ -170,7 +171,23 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
                 if counter0 == len(states):
                     converge = True
 
-        error_pt_state: float = error_pt[actual_state_index]
+        error_pt_state: float = 0
+
+        if calculate_matrix_exponent:
+            error_pt_state = error_pt[actual_state_index]
+
+            abs_error_pt_state = abs(error_pt_state)
+
+            if abs_error_pt_state > 0:
+                error_pt_state = math.log(abs_error_pt_state)
+
+        if calculate_matrix_exponent:
+            if error_pt_state < min_error:
+                min_error = error_pt_state
+
+            if error_pt_state > max_error:
+                max_error = error_pt_state
+
         vec0: float = vector0[actual_state_index]
 
         list_state_times.append((curr_time, t, empirical_distribution, vec0, error, error_pt_state))
@@ -188,13 +205,20 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
 def plot_error(t_opt: float, min_error: float, max_error: float,
                dict_states: dict, dict_states_times: dict,
                plot_path: str = 'ctmc1_error.png', t_max: float = 0,
-               show_figures: bool = False):
+               show_figures: bool = False, plot_error_pt: bool = False):
     plt.figure()
 
     plt.xlim(0, t_opt)
     plt.ylim(min_error, max_error)
 
     color = iter(matplotlib.cm.rainbow(np.linspace(0, 1, len(dict_states_times))))
+
+    error_index: int = 0
+
+    if plot_error_pt:
+        error_index = 5
+    else:
+        error_index = 4
 
     for state_index in dict_states_times.keys():
         stationary: float = 0
@@ -211,7 +235,7 @@ def plot_error(t_opt: float, min_error: float, max_error: float,
             list_state_times: list = state_times[0]
 
             x: list = [tup[1] for tup in list_state_times]
-            y: list = [tup[4] for tup in list_state_times]
+            y: list = [tup[error_index] for tup in list_state_times]
 
             c = next(color)
 
@@ -316,7 +340,7 @@ def run(dict_states: dict, initial_state_index: int = 1,
     if dir_name is None:
         dir_name = ""
 
-    file_path: str = os.path.join(dir_name, f"hist_{plot_path}")
+    file_path: str = os.path.join(dir_name, f"{dir_name}_hist_{plot_path}")
 
     plt.figure()
     plt.hist(tops)
@@ -326,11 +350,11 @@ def run(dict_states: dict, initial_state_index: int = 1,
         plt.show()
 
     if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
-        file_path = os.path.join(dir_name, f"error_{plot_path}")
+        file_path = os.path.join(dir_name, f"{dir_name}_error_{plot_path}")
         plot_error(min_t_opt, min_error, max_error, dict_states, opt_dict_states_times,
-                   file_path, t_max, show_figures)
+                   file_path, t_max, show_figures, plot_error_pt=calculate_matrix_exponent)
 
-        file_path = os.path.join(dir_name, plot_path)
+        file_path = os.path.join(dir_name, f"{dir_name}_{plot_path}")
         plot_results(min_t_opt, dict_states, opt_dict_states_times, file_path, t_max,
                      calculate_matrix_exponent, show_figures)
 

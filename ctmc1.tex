@@ -71,9 +71,13 @@ We present the calculations for the states in three methods:
     \item Calculating $P(t)=e^{tQ}$ (labeled as \textbf{Pt}).
 \end{enumerate}
 
-There are several possible sources for an error:
-\begin{enumerate}
-    \item 
-\end{enumerate}
-\includegraphics{ctmc1.png}
+We observe that $e^{tQ}$ converges to the stationary distribution only after a few steps, with a negligible error coming from the floating point computer representation. 
+
+On the other hand, the calculation of the stationary distribution by the Gillespie simulation is not as obvious, and depends on our definition of the allowed error for convergence, and the way that we measure this error. For this, I enable in my code a parameter for the error, and a parameter for counting consecutive successes, meaning consecutive samples for which the error is less than the allowed error. The $t$ from which this count begins will be considered as an optimal $t$, and running this simulation over and over again, and building a histogram of the number of simulations for the different optimal $t$ values, we observe that for some values of error and count of successes, we obtain a histogram that behaves very generally as a normal distribution.
+
+\includegraphics{no-pt_ctmc1.png}
+\includegraphics{no-pt_error_ctmc1.png}
+\includegraphics{no-pt_hist_ctmc1.png}
+\includegraphics{with-pt_ctmc1.png}
+\includegraphics{with-pt_error_ctmc1.png}
 \end{document}
