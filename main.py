@@ -1,4 +1,5 @@
 import math
+import os
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -185,7 +186,8 @@ def run_simulation(index: int, dict_states: dict, initial_state_index: int = 1,
 
 def plot_error(t_opt: float, min_error: float, max_error: float,
                dict_states: dict, dict_states_times: dict,
-               plot_path: str = 'ctmc1_error.png', t_max: float = 0):
+               plot_path: str = 'ctmc1_error.png', t_max: float = 0,
+               show_figures: bool = False):
     plt.figure()
 
     plt.xlim(0, t_opt)
@@ -222,12 +224,13 @@ def plot_error(t_opt: float, min_error: float, max_error: float,
     if plot_path:
         plt.savefig(plot_path)
 
-    plt.show()
+    if show_figures:
+        plt.show()
 
 
 def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
                  plot_path: str = 'ctmc1.png', t_max: float = 0,
-                 plot_pt: bool = True):
+                 plot_pt: bool = True, show_figures: bool = False):
     plt.figure()
 
     plt.xlim(0, t_opt)
@@ -271,13 +274,15 @@ def plot_results(t_opt: float, dict_states: dict, dict_states_times: dict,
     if plot_path:
         plt.savefig(plot_path)
 
-    plt.show()
+    if show_figures:
+        plt.show()
 
 
 def run(dict_states: dict, initial_state_index: int = 1,
         num_transitions: int = 100000, error_threshold: float = 0.01,
         error_counter_percentage: float = 0.1, num_simulations: int = 10,
-        plot_path: str = 'ctmc1.png', calculate_matrix_exponent: bool = True):
+        plot_path: str = 'ctmc1.png', calculate_matrix_exponent: bool = True,
+        dir_name: str = None, show_figures: bool = False):
     min_t_opt: float = 999999999
     opt_dict_states_times: dict = {}
 
@@ -304,15 +309,29 @@ def run(dict_states: dict, initial_state_index: int = 1,
                 min_t_opt = t_opt
                 opt_dict_states_times = dict_states_times
 
+    if dir_name and not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+
+    if dir_name is None:
+        dir_name = ""
+
+    file_path: str = os.path.join(dir_name, f"hist_{plot_path}")
+
+    plt.figure()
     plt.hist(tops)
-    plt.savefig(f"hist_{plot_path}")
-    plt.show()
+    plt.savefig(file_path)
+
+    if show_figures:
+        plt.show()
 
     if isinstance(opt_dict_states_times, dict) and len(opt_dict_states_times) > 0:
+        file_path = os.path.join(dir_name, f"error_{plot_path}")
         plot_error(min_t_opt, min_error, max_error, dict_states, opt_dict_states_times,
-                   f"error_{plot_path}", t_max)
-        plot_results(min_t_opt, dict_states, opt_dict_states_times, plot_path, t_max,
-                     calculate_matrix_exponent)
+                   file_path, t_max, show_figures)
+
+        file_path = os.path.join(dir_name, plot_path)
+        plot_results(min_t_opt, dict_states, opt_dict_states_times, file_path, t_max,
+                     calculate_matrix_exponent, show_figures)
 
 
 states: dict = {
@@ -321,10 +340,10 @@ states: dict = {
     3: (3, {2: 1}, 1 / 7)
 }
 
-run(states, 1, 10000,
-    error_threshold=0.01, num_simulations=1000,
-    calculate_matrix_exponent=False)
+run(states, 1, 1000,
+    error_threshold=0.01, num_simulations=100,
+    calculate_matrix_exponent=False, dir_name="no-pt")
 
-run(states, 1, 100000,
+run(states, 1, 1000,
     error_threshold=0.01, num_simulations=3,
-    calculate_matrix_exponent=True)
+    calculate_matrix_exponent=True, dir_name="with-pt")
